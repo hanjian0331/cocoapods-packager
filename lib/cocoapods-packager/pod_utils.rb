@@ -158,7 +158,7 @@ module Pod
         file_accessors = create_file_accessors(static_target, dynamic_sandbox)
 
         archs = []
-        dynamic_target = Pod::PodTarget.new(dynamic_sandbox, true, static_target.user_build_configurations, archs, platform, static_target.specs, static_target.target_definitions, file_accessors)
+        dynamic_target = Pod::PodTarget.new(dynamic_sandbox, BuildType.dynamic_framework, static_target.user_build_configurations, archs, platform, static_target.specs, static_target.target_definitions, file_accessors)
         dynamic_target
       end
 
@@ -186,8 +186,16 @@ module Pod
       end
 
       def copy_dynamic_target(static_sandbox, _dynamic_target, dynamic_sandbox)
-        command = "cp -a #{static_sandbox.root}/#{@spec.name} #{dynamic_sandbox.root}"
-        `#{command}`
+        if @local
+          podspec_path = @path.to_param
+          index_num = podspec_path.rindex("/")
+          path = podspec_path[0, index_num]
+          command = "ln -s #{path} #{dynamic_sandbox.root}/#{@spec.name}"
+          `#{command}`
+        else
+          command = "cp -a #{static_sandbox.root}/#{@spec.name} #{dynamic_sandbox.root}"
+          `#{command}`
+        end
       end
 
       def create_file_accessors(target, dynamic_sandbox)
